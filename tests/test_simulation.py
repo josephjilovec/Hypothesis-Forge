@@ -172,4 +172,31 @@ def test_protein_simulation_accuracy():
     assert torch.allclose(results, data, rtol=0.1, atol=0.5)
 
 def test_astro_simulation_accuracy():
-    """Test astroph
+    """Test astrophysical simulation output accuracy."""
+    model = AstroSim(device='cpu')
+    data = torch.tensor([[1.0, 2.0, 3.0, 1e30], [4.0, 5.0, 6.0, 1e30]], dtype=torch.float32)
+    
+    results = model.simulate(data)
+    assert results is not None
+    assert results.shape == (2, 6)  # Positions + velocities
+    # Check if positions are reasonable (not diverging)
+    assert torch.all(results[:, :3] >= -100) and torch.all(results[:, :3] <= 100)
+
+def test_integration_run(sim_engine, mock_data_file):
+    """Test full simulation run with valid data."""
+    with patch('simulation.sim_engine.SimulationEngine.load_model') as mock_load:
+        mock_model = Mock(spec=SimulationModel)
+        mock_model.simulate.return_value = torch.tensor([[1.1, 2.1, 3.1]])
+        mock_load.side_effect = [mock_model, None]  # Mock protein model, skip astro
+        
+        with patch.object(logger, 'info') as mock_info:
+            sim_engine.run()
+            assert mock_load.call_count == 2  # Tried protein and astro
+            assert mock_info.call_count >= 1
+            output_path = sim_engine.output_dir / "test_processed_results.parquet"
+            assert output_path.exists()
+            saved_df = pd.read_parquet(output_path)
+            assert saved_df.shape == (1, 3)
+
+if __name__ == "__main__":
+    pytest.main(["-v"])
