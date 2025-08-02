@@ -1,0 +1,32 @@
+# Core dependencies for data processing and scientific computing
+numpy==1.24.3
+pandas==2.0.3
+scipy==1.10.1
+
+# PyTorch for AI-driven simulations and RL
+torch==2.0.1
+
+# Data ingestion and processing
+biopython==1.81
+astropy==5.3.0
+
+# Neo4j for knowledge graph
+neo4j==5.10.0
+
+# API queries for PubMed and arXiv
+requests==2.31.0
+
+# Streamlit for dashboard (chosen over Plotly Dash for simplicity)
+streamlit==1.31.0
+
+# Plotly for visualizations
+plotly==5.15.0
+
+# Testing framework
+pytest==7.4.0
+
+# Logging and development tools
+python-logging==0.4.9.23
+
+# Ensure compatibility with Python 3.9 (as used in Dockerfile)
+python==3.9.*
