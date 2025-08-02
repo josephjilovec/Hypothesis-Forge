@@ -1,13 +1,18 @@
-import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.146.0/examples/jsm/controls/OrbitControls.js';
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.module.js';
+// Fallback for D3.js and Three.js in case of CDN failure
+const d3 = window.d3 || { select: () => ({ empty: () => true, selectAll: () => ({ remove: () => {} }) }) };
+const THREE = window.THREE || { Scene: class {}, PerspectiveCamera: class {}, WebGLRenderer: class {}, LineBasicMaterial: class {}, BufferGeometry: class {}, Line: class {}, SphereGeometry: class {}, MeshBasicMaterial: class {}, Mesh: class {} };
+const OrbitControls = window.THREE && window.THREE.OrbitControls ? window.THREE.OrbitControls : class {};
 
-// Ensure DOM is ready before executing
-function whenDocumentReady(callback) {
+// Ensure DOM and Streamlit data are ready
+function whenReady(callback) {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        callback();
+        if (window.streamlitDataReady) {
+            callback();
+        } else {
+            setTimeout(() => whenReady(callback), 100);
+        }
     } else {
-        document.addEventListener('DOMContentLoaded', callback);
+        document.addEventListener('DOMContentLoaded', () => whenReady(callback));
     }
 }
 
@@ -20,9 +25,16 @@ function initProteinVisualization(containerId, data) {
             return;
         }
 
+        if (!THREE.Scene) {
+            console.error('Three.js not loaded');
+            document.getElementById('protein-viz-fallback').innerText = 'Error: 3D visualization library not loaded';
+            return;
+        }
+
         // Validate data
         if (!Array.isArray(data) || data.length === 0) {
             console.warn('No valid protein data provided');
+            document.getElementById('protein-viz-fallback').innerText = 'No protein data available';
             return;
         }
 
@@ -31,7 +43,7 @@ function initProteinVisualization(containerId, data) {
         const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
-        container.innerHTML = ''; // Clear container
+        container.innerHTML = '';
         container.appendChild(renderer.domElement);
 
         // Add orbit controls
@@ -53,6 +65,7 @@ function initProteinVisualization(containerId, data) {
 
         if (coordinates.length === 0) {
             console.warn('No valid coordinates for protein visualization');
+            document.getElementById('protein-viz-fallback').innerText = 'Invalid protein data format';
             return;
         }
 
@@ -94,6 +107,7 @@ function initProteinVisualization(containerId, data) {
         });
     } catch (error) {
         console.error('Error initializing protein visualization:', error);
+        document.getElementById('protein-viz-fallback').innerText = 'Error loading protein visualization';
     }
 }
 
@@ -103,12 +117,14 @@ function initHypothesisList(containerId, hypotheses, onClickCallback) {
         const container = d3.select(`#${containerId}`);
         if (container.empty()) {
             console.error(`Container ${containerId} not found`);
+            document.getElementById('hypothesis-list-fallback').innerText = 'Error: Hypothesis container not found';
             return;
         }
 
         // Validate hypotheses
         if (!Array.isArray(hypotheses) || hypotheses.length === 0) {
             console.warn('No valid hypotheses provided');
+            document.getElementById('hypothesis-list-fallback').innerText = 'No hypotheses available';
             return;
         }
 
@@ -145,31 +161,34 @@ function initHypothesisList(containerId, hypotheses, onClickCallback) {
             });
     } catch (error) {
         console.error('Error initializing hypothesis list:', error);
+        document.getElementById('hypothesis-list-fallback').innerText = 'Error loading hypotheses';
     }
 }
 
-// Initialize dashboard interactivity when DOM is ready
-whenDocumentReady(() => {
-    // Fetch data (Streamlit will inject these variables)
+// Initialize dashboard interactivity
+whenReady(() => {
+    window.streamlitDataReady = true;
     const proteinData = window.proteinData || [];
     const hypotheses = window.hypotheses || [];
 
-    // Initialize protein visualization
     if (document.getElementById('protein-viz') && proteinData.length > 0) {
         initProteinVisualization('protein-viz', proteinData);
     } else {
         console.warn('Protein visualization not initialized: missing container or data');
+        if (document.getElementById('protein-viz-fallback')) {
+            document.getElementById('protein-viz-fallback').innerText = 'No protein data available';
+        }
     }
 
-    // Initialize hypothesis list
     if (document.getElementById('hypothesis-list') && hypotheses.length > 0) {
         initHypothesisList('hypothesis-list', hypotheses, (hypothesis) => {
-            // Callback for hypothesis click
             alert(`Selected: ${hypothesis.hypothesis}\nScore: ${hypothesis.score.toFixed(3)}`);
-            // Add logic to update dashboard if needed
         });
     } else {
         console.warn('Hypothesis list not initialized: missing container or data');
+        if (document.getElementById('hypothesis-list-fallback')) {
+            document.getElementById('hypothesis-list-fallback').innerText = 'No hypotheses available';
+        }
     }
 });
 
@@ -179,8 +198,8 @@ document.addEventListener('streamlit:render', (event) => {
         const data = event.detail.args || {};
         window.proteinData = data.proteinData || [];
         window.hypotheses = data.hypotheses || [];
-        
-        // Reinitialize visualizations with new data
+        window.streamlitDataReady = true;
+
         if (document.getElementById('protein-viz') && window.proteinData.length > 0) {
             initProteinVisualization('protein-viz', window.proteinData);
         }
@@ -190,11 +209,16 @@ document.addEventListener('streamlit:render', (event) => {
             });
         }
 
-        // Toggle view based on Streamlit selection
         const view = data.view || 'Simulations';
         document.getElementById('simulations-view').style.display = view === 'Simulations' ? 'block' : 'none';
         document.getElementById('hypotheses-view').style.display = view === 'Hypotheses' ? 'block' : 'none';
     } catch (error) {
         console.error('Error handling Streamlit render event:', error);
+        if (document.getElementById('protein-viz-fallback')) {
+            document.getElementById('protein-viz-fallback').innerText = 'Error loading visualization';
+        }
+        if (document.getElementById('hypothesis-list-fallback')) {
+            document.getElementById('hypothesis-list-fallback').innerText = 'Error loading hypotheses';
+        }
     }
 });
