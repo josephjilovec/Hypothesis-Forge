@@ -1,0 +1,97 @@
+# AWS Elastic Beanstalk configuration for Hypothesis Forge
+version: 1
+environment:
+  # Environment name
+  name: hypothesis-forge-env
+  # Platform for Dockerized Python application
+  platform:
+    arn: "arn:aws:elasticbeanstalk:us-east-1::platform/Docker running on 64bit Amazon Linux 2023/4.0.0"
+  # Tier for web server
+  tier:
+    Name: WebServer
+    Type: Standard
+  # Instance type configuration
+  instance_type: t3.medium
+  # EC2 instance settings
+  instance_settings:
+    MinInstances: 1
+    MaxInstances: 2
+    InstanceTypes:
+      - t3.medium
+  # Auto-scaling configuration
+  auto_scaling:
+    MinSize: 1
+    MaxSize: 4
+    TargetGroupARN: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/hypothesis-forge-tg/abcdef1234567890"
+    ScalingPolicies:
+      - PolicyName: CPUUtilizationScaling
+        MetricType: CPUUtilization
+        TargetValue: 70.0
+        Cooldown: 300
+        AdjustmentType: ChangeInCapacity
+        MinAdjustmentMagnitude: 1
+  # Environment variables for Streamlit
+  environment_variables:
+    STREAMLIT_SERVER_PORT: "8501"
+    STREAMLIT_SERVER_ADDRESS: "0.0.0.0"
+    PYTHONUNBUFFERED: "1"
+# S3 configuration for static files and data storage
+s3:
+  bucket:
+    name: hypothesis-forge-data
+    region: us-east-1
+    # Bucket policy for public read access (optional, adjust as needed)
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::hypothesis-forge-data/*"
+          }
+        ]
+      }
+# Docker configuration
+docker:
+  # Reference to the Dockerfile
+  image:
+    name: hypothesis-forge
+    tag: latest
+  # Port mapping for Streamlit
+  ports:
+    - containerPort: 8501
+      hostPort: 8501
+  # Mount volumes for data persistence (optional)
+  volumes:
+    - name: data
+      host:
+        sourcePath: /app/data
+# Elastic Load Balancer configuration
+load_balancer:
+  Type: application
+  Listeners:
+    - Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupARN: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/hypothesis-forge-tg/abcdef1234567890"
+# Security group configuration
+security_groups:
+  - Name: hypothesis-forge-sg
+    Rules:
+      - Protocol: TCP
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - Protocol: TCP
+        FromPort: 8501
+        ToPort: 8501
+        CidrIp: 0.0.0.0/0
+# IAM role for EC2 instances
+iam_role:
+  RoleName: hypothesis-forge-role
+  ManagedPolicyArns:
+    - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+    - "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkWebTier"
