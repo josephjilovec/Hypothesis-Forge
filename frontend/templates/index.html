@@ -6,11 +6,6 @@
     <title>Hypothesis Forge Dashboard</title>
     <!-- Link to custom CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
-    <!-- Include Three.js for 3D visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/jsm/controls/OrbitControls.js"></script>
-    <!-- Include D3.js for interactive elements -->
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/+esm"></script>
 </head>
 <body>
     <div class="stApp">
@@ -29,13 +24,17 @@
         <!-- Main Content -->
         <main>
             <!-- Simulation View -->
-            <section id="simulations-view" style="display: none;">
+            <section id="simulations-view" style="display: block;">
                 <h2>Simulation Results</h2>
                 <select id="simulation-selector">
                     <!-- Streamlit will populate options dynamically -->
                 </select>
-                <div id="protein-viz" style="width: 100%; height: 500px;"></div>
-                <div id="astro-viz" style="width: 100%; height: 500px;"></div>
+                <div id="protein-viz" style="width: 100%; height: 500px;">
+                    <p id="protein-viz-fallback">Loading protein visualization...</p>
+                </div>
+                <div id="astro-viz" style="width: 100%; height: 500px;">
+                    <p id="astro-viz-fallback">Loading astrophysical visualization...</p>
+                </div>
                 <div class="stExpander">
                     <details>
                         <summary>View Raw Simulation Data</summary>
@@ -50,7 +49,7 @@
             <section id="hypotheses-view" style="display: none;">
                 <h2>Ranked Hypotheses</h2>
                 <div id="hypothesis-list">
-                    <!-- D3.js will populate clickable list here -->
+                    <p id="hypothesis-list-fallback">Loading hypotheses...</p>
                 </div>
                 <div id="hypothesis-bar-plot" class="plotly-graph-div">
                     <!-- Streamlit will inject Plotly bar plot here -->
@@ -60,26 +59,40 @@
     </div>
 
     <!-- Link to custom JavaScript -->
-    <script src="/static/js/interactive.js" type="module"></script>
-    <!-- JavaScript to initialize data (populated by Streamlit) -->
+    <script src="/static/js/interactive.js"></script>
+    <!-- Fallback for JavaScript errors -->
     <script>
-        // Placeholder for data injection by Streamlit
-        window.proteinData = []; // Format: [[x, y, z], ...]
-        window.hypotheses = [];  // Format: [{hypothesis, score, ...}, ...]
+        try {
+            console.log('Inline script loaded at', new Date().toISOString());
+            window.proteinData = window.proteinData || [];
+            window.hypotheses = window.hypotheses || [];
+            window.streamlitDataReady = false;
 
-        // Toggle views based on Streamlit radio selection
-        function toggleView(view) {
-            document.getElementById('simulations-view').style.display = view === 'Simulations' ? 'block' : 'none';
-            document.getElementById('hypotheses-view').style.display = view === 'Hypotheses' ? 'block' : 'none';
+            function toggleView(view) {
+                console.log('Toggling view to:', view);
+                document.getElementById('simulations-view').style.display = view === 'Simulations' ? 'block' : 'none';
+                document.getElementById('hypotheses-view').style.display = view === 'Hypotheses' ? 'block' : 'none';
+            }
+
+            document.addEventListener('streamlit:render', (event) => {
+                try {
+                    console.log('Streamlit render event:', event.detail);
+                    const data = event.detail.args || {};
+                    window.proteinData = data.proteinData || [];
+                    window.hypotheses = data.hypotheses || [];
+                    window.streamlitDataReady = true;
+                    toggleView(data.view || 'Simulations');
+                } catch (e) {
+                    console.error('Error in Streamlit render:', e);
+                    document.getElementById('protein-viz-fallback').innerText = 'Error loading visualization';
+                    document.getElementById('hypothesis-list-fallback').innerText = 'Error loading hypotheses';
+                }
+            });
+        } catch (e) {
+            console.error('JavaScript initialization error:', e);
+            document.getElementById('protein-viz-fallback').innerText = 'Error loading visualization';
+            document.getElementById('hypothesis-list-fallback').innerText = 'Error loading hypotheses';
         }
-
-        // Listen for Streamlit updates (simulated here)
-        document.addEventListener('streamlit:render', (event) => {
-            const data = event.detail.args;
-            window.proteinData = data.proteinData || [];
-            window.hypotheses = data.hypotheses || [];
-            toggleView(data.view || 'Simulations');
-        });
     </script>
 </body>
 </html>
