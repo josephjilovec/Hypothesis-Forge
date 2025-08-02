@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -44,7 +45,6 @@ def load_hypotheses(hypothesis_file: str = 'hypothesis/cross_referenced_hypothes
 def plot_protein_structure(data: pd.DataFrame) -> go.Figure:
     """Create a 3D scatter plot for protein structure."""
     try:
-        # Assume data has columns for x, y, z coordinates
         if data.shape[1] >= 3:
             fig = go.Figure(data=[
                 go.Scatter3d(
@@ -70,7 +70,6 @@ def plot_protein_structure(data: pd.DataFrame) -> go.Figure:
 def plot_astrophysical_data(data: pd.DataFrame) -> go.Figure:
     """Create a 3D scatter plot for astrophysical data."""
     try:
-        # Assume data has columns for x, y, z positions and velocities
         if data.shape[1] >= 3:
             fig = go.Figure(data=[
                 go.Scatter3d(
@@ -96,49 +95,75 @@ def main():
     """Main function to create Streamlit dashboard."""
     st.set_page_config(page_title="Hypothesis Forge", layout="wide")
     
-    # Load custom CSS
-    css_path = Path('frontend/static/css/style.css')
-    if css_path.exists():
-        with open(css_path, 'r') as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    
-    st.title("Hypothesis Forge: AI-Driven Scientific Discovery")
-    st.markdown("Explore simulation results and ranked hypotheses for protein folding and astrophysical simulations.")
+    # Load index.html template
+    try:
+        with open('frontend/templates/index.html', 'r') as f:
+            html_template = f.read()
+        logger.info("Loaded index.html template")
+    except Exception as e:
+        st.error(f"Error loading index.html: {str(e)}")
+        logger.error(f"Error loading index.html: {str(e)}")
+        return
 
     # Load data
     simulation_results = load_simulation_results()
     hypotheses = load_hypotheses()
 
+    # Prepare data for JavaScript
+    protein_data = []
+    if simulation_results:
+        for key, sim in simulation_results.items():
+            if sim['type'] == 'protein':
+                protein_data = sim['data'].values.tolist()[:100]  # Limit for performance
+                break
+    logger.info(f"Prepared protein_data with {len(protein_data)} rows")
+    logger.info(f"Prepared hypotheses with {len(hypotheses)} items")
+
     # Sidebar for navigation
     st.sidebar.header("Navigation")
-    view = st.sidebar.radio("Select View", ["Simulations", "Hypotheses"])
+    view = st.sidebar.radio("Select View", ["Simulations", "Hypotheses"], key="view")
 
+    # Render custom HTML with injected data
+    try:
+        components.html(
+            html_template,
+            height=800,
+            scrolling=True,
+            extra_args={
+                'view': view,
+                'proteinData': json.dumps(protein_data),
+                'hypotheses': json.dumps(hypotheses)
+            }
+        )
+        logger.info("Rendered HTML component with data")
+    except Exception as e:
+        st.error(f"Error rendering HTML component: {str(e)}")
+        logger.error(f"Error rendering HTML component: {str(e)}")
+
+    # Streamlit-native visualizations as fallback
     if view == "Simulations":
         st.header("Simulation Results")
         if not simulation_results:
             st.warning("No simulation results available.")
             return
 
-        # Dropdown to select simulation result
         sim_key = st.selectbox("Select Simulation", list(simulation_results.keys()))
         sim_data = simulation_results[sim_key]['data']
         sim_type = simulation_results[sim_key]['type']
 
-        # Plot based on simulation type
         if sim_type == 'protein':
             fig = plot_protein_structure(sim_data)
             if fig:
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.error("Failed to generate protein structure plot.")
-        else:  # astro
+        else:
             fig = plot_astrophysical_data(sim_data)
             if fig:
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.error("Failed to generate astrophysical plot.")
 
-        # Display raw data
         with st.expander("View Raw Simulation Data"):
             st.dataframe(sim_data)
 
@@ -148,7 +173,6 @@ def main():
             st.warning("No hypotheses available.")
             return
 
-        # Display hypotheses in a table
         df = pd.DataFrame(hypotheses)
         st.dataframe(
             df[['hypothesis', 'novelty', 'feasibility', 'score', 'novelty_api']],
@@ -162,7 +186,6 @@ def main():
             use_container_width=True
         )
 
-        # Bar plot for scores
         fig = px.bar(
             df,
             x='hypothesis',
