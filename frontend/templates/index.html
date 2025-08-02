@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis Forge Dashboard</title>
+    <!-- Link to custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Include Three.js for 3D visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/jsm/controls/OrbitControls.js"></script>
+    <!-- Include D3.js for interactive elements -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/+esm"></script>
+</head>
+<body>
+    <div class="stApp">
+        <!-- Header -->
+        <h1>Hypothesis Forge: AI-Driven Scientific Discovery</h1>
+        <p>Explore simulation results and ranked hypotheses for protein folding and astrophysical simulations.</p>
+
+        <!-- Sidebar -->
+        <div class="stSidebar">
+            <h2>Navigation</h2>
+            <div id="navigation-radio">
+                <!-- Streamlit will inject radio buttons here -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Simulation View -->
+            <section id="simulations-view" style="display: none;">
+                <h2>Simulation Results</h2>
+                <select id="simulation-selector">
+                    <!-- Streamlit will populate options dynamically -->
+                </select>
+                <div id="protein-viz" style="width: 100%; height: 500px;"></div>
+                <div id="astro-viz" style="width: 100%; height: 500px;"></div>
+                <div class="stExpander">
+                    <details>
+                        <summary>View Raw Simulation Data</summary>
+                        <div id="raw-data-table">
+                            <!-- Streamlit will inject table here -->
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- Hypotheses View -->
+            <section id="hypotheses-view" style="display: none;">
+                <h2>Ranked Hypotheses</h2>
+                <div id="hypothesis-list">
+                    <!-- D3.js will populate clickable list here -->
+                </div>
+                <div id="hypothesis-bar-plot" class="plotly-graph-div">
+                    <!-- Streamlit will inject Plotly bar plot here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Link to custom JavaScript -->
+    <script src="/static/js/interactive.js" type="module"></script>
+    <!-- JavaScript to initialize data (populated by Streamlit) -->
+    <script>
+        // Placeholder for data injection by Streamlit
+        window.proteinData = []; // Format: [[x, y, z], ...]
+        window.hypotheses = [];  // Format: [{hypothesis, score, ...}, ...]
+
+        // Toggle views based on Streamlit radio selection
+        function toggleView(view) {
+            document.getElementById('simulations-view').style.display = view === 'Simulations' ? 'block' : 'none';
+            document.getElementById('hypotheses-view').style.display = view === 'Hypotheses' ? 'block' : 'none';
+        }
+
+        // Listen for Streamlit updates (simulated here)
+        document.addEventListener('streamlit:render', (event) => {
+            const data = event.detail.args;
+            window.proteinData = data.proteinData || [];
+            window.hypotheses = data.hypotheses || [];
+            toggleView(data.view || 'Simulations');
+        });
+    </script>
+</body>
+</html>
