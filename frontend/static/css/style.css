@@ -1,0 +1,147 @@
+/* General dashboard styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f6f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Streamlit-specific container */
+.stApp {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header styling */
+h1 {
+    font-size: 2.5rem;
+    color: #1a73e8;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Sidebar styling */
+.stSidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.stSidebar h2 {
+    font-size: 1.5rem;
+    color: #1a73e8;
+    margin-bottom: 1rem;
+}
+
+.stRadio > div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Visualization containers */
+.plotly-graph-div {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+/* Hypothesis table styling */
+.stDataFrame {
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .stApp {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .stSidebar {
+        padding: 10px;
+    }
+
+    .plotly-graph-div {
+        padding: 10px;
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Expander styling for raw data */
+.stExpander {
+    background-color: #ffffff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stExpander summary {
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+/* Selectbox styling */
+.stSelectbox {
+    margin-bottom: 20px;
+}
+
+.stSelectbox > div > div {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+/* Button and interactive elements */
+.stButton > button {
+    background-color: #1a73e8;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.stButton > button:hover {
+    background-color: #1557b0;
+}
+
+/* Ensure Plotly charts are responsive */
+.plotly-graph-div > div {
+    width: 100% !important;
+    height: auto !important;
+}
