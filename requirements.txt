@@ -1,0 +1,53 @@
+# Core dependencies
+numpy>=1.24.0
+pandas>=2.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Scientific data processing
+biopython>=1.81
+astropy>=5.3.0
+
+# Knowledge graph
+neo4j>=5.11.0
+
+# Web framework and dashboard
+streamlit>=1.28.0
+plotly>=5.17.0
+
+# Reinforcement learning
+gymnasium>=0.29.0
+stable-baselines3>=2.1.0
+
+# API clients
+requests>=2.31.0
+feedparser>=6.0.10
+
+# Data serialization
+pyarrow>=12.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Code quality
+flake8>=6.1.0
+black>=23.9.0
+mypy>=1.6.0
+
+# Logging and monitoring
+python-dotenv>=1.0.0
+loguru>=0.7.0
+
+# Security
+cryptography>=41.0.0
+
+# Utilities
+tqdm>=4.66.0
+pyyaml>=6.0.1
+psutil>=5.9.0
+
+# Health monitoring
+flask>=2.3.0
+
